@@ -1,0 +1,128 @@
+---
+title: ""
+runtime: shiny
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# *How are Word Probabilities Being Generated?* 
+
+### *Introduction to the Katz Back-off Model*
+
+  The language model used in this project is known as the Katz back-off model, which relies on n-grams to estimate conditional probabilities of words. In the context of this app, n-grams are defined as a sequence consisting of "n" number of words, such that an n-gram made of 1 word is a "unigram", 2 words a "bigram", 3 words a "trigram", and so on. The general idea is that given a corpus from which n-grams are generated, we can look at a certain word and assign it a probability given it's history in n-grams. The more information we have about the words that precede the word we are trying to predict, the greater the accuracy of the prediction. For example, consider the following n-grams:
+
+* the yellow ___
+* the man with the yellow __
+
+  You might be able to pretty accurately guess the word that completes the 6-gram (unless you have never heard of Curious George), but you would be hard pressed to figure out what might complete the trigram because there are so many potential words. So, more information means more predictive power, which higher order n-grams provide. 
+
+  In Katz's back-off model, the conditional probabilities of a word given its preceding words in an n-gram are calculated in the following equation (courtesy of Wikipedia):
+
+![](https://i.imgur.com/IGRkfcF.png)
+
+Where:
+
+1. *d* is the Good-Turing discounting factor
+2. *C(wi-n+1...wi)* is the count of the n-gram seen in the training corpus and *wi* is the *ith* word in the context
+3. *C(wi-n+1...wi-1)* is the count of the (n-1)-gram 
+4. *alpha* is the back-off weight
+5. *k* is set to 0
+
+  In summary, if an n-gram is seen at least once in the training set, then the conditional probability of a word given its context an n-gram is proportional to the maximum likelihood estimate (MLE) of that n-gram. Otherwise, it is equal to the back-off conditional probability of its (n-1)-gram. The back-off conditional probability is used in the case where we would like to calculate the probability of some unseen n-gram. Let's say we want to estimate P(fat|that cat is), but the fourgram "that cat is fat" never appeared in training. In a simple back-off model, we would naively back-off to the trigram "cat is fat" without ever assigning a probability to "that cat is fat", which could be concerning because the fourgram gives more context.  
+
+  Katz attempts to solve this by redistributing probabilities from higher order n-grams to lower order n-grams through Good-Turing discounting. GT discounting lowers the frequency counts of unreliably observed (seen less than 6 times in my implementation) n-grams in order to provide probabilities for unseen n-grams. For the above example, that means we can actually calculate and assign a probability to the fourgram "that cat is fat" even though that exact sequence wasn't observed in training. This is the big defining feature of Katz's model. 
+
+Here is a scenario for performing the back-off calculation using the same hypothetical example from above.
+
+1. In our fourgram table we have:
+  + "that cat is cute" seen 10 times and a discount coefficient of 1 
+  + "that cat is so" seen 6 times and a discount coefficient of 1
+  + "that cat is really" seen 2 times and a discount coefficient of 0.61
+2. In our trigram table we have:
+  + "cat is fat" seen 3 times and a discount coefficient of 0.7
+  + "cat is evil" seen 6 times and a discount coefficient of 1
+  + "cat is cute" seen 18 times and a discount coefficient of 1
+  + "cat is really" seen 6 times and a discount coefficient of 1
+  + "cat is so" seen 10 times and a discount coefficient of 1
+  
+The left over probability, beta (which is used to calculate alpha), is derived from this equation:
+
+![](https://i.imgur.com/LcU7biY.png)
+
+  Explicitly, we are reaping some probability from the fourgrams beginning with "that cat is" to give to the fourgram "that cat is fat". 
+
+$$P_{leftover} = 1- \frac{10 * 1 + 6 * 1 + 2 * 0.61}{10 + 6 + 2} = 0.0433$$
+
+Then, we use this left over probability to calculate alpha using this equation. 
+
+![](https://i.imgur.com/VKrvLhm.png)
+
+$$
+\alpha = \frac{0.0433}{3 * 0.7 + 6 * 1} = 0.0053
+$$
+
+  Note that we don't use the trigrams that previously appeared in fourgrams for our calculation of the denominator. Finally, the conditional back-off probability can be calculated as follows.
+
+$$
+P_{bo}(fat|\text{ that cat is }\text) = \alpha P_{bo}(fat|\text{cat is}\text) = 0.0053*(3*0.7) = 0.0112
+$$
+
+
+### *Implementing KBO in R*
+
+  Implementing a mathematical model in any coding language presents a variety of challenges. Identifying the suitable tools/libraries you want to use, determining what data to collect, figuring out how to transform the data into elements that can be used in the algorithm, and deploying the algorithm to create a predictive function that operates very quickly are all tasks that require a lot of preparation.
+
+#### Step 1: Reading in the data
+
+  Three text files were provided as data for the capstone, a hefty ~560 MB in total. Each text file contains sentences from either a list of blogs, news articles, or Twitter. Altogether, a total of 3336695 lines of text resulting in over 500 million words. Each line of text was read into R using the base R readLines function.
+
+#### Step 2: Creating a corpus and cleaning the data
+
+  Arguably the most important step is cleaning the data before using it to build a model. If a model is trained on data containing hashtags, profanity, non-word characters in random places, and even non-English characters, it will probably perform poorly. The following transformations were done on the data:
+
+1. Removing non-ASCII characters
+2. Converting all letters to lowercase
+3. Removing all numbers
+4. Removing web links
+5. Removing excess white space at the end/start of lines
+6. Removing excess white space between words
+7. Creating sentences using lexrankR's `sentenceParse`
+8. Removing sentences containing profanity using Google's filter list
+
+  Though there are still certainly some issues remaining, such as non-word characters forming strange sequences of n-grams (especially in the case of the Twitter sentences), they can be dealt with at a later stage. Normalizing the text by converting to lowercase is necessary because the predictive algorithm converts all input to lowercase before making a prediction. Lastly, sentences with profanity are removed entirely because if only the word itself is removed, new n-grams are falsely created (for example "What the **** is going on" would become "What the is going on"). 
+
+#### Step 3: Creating n-gram tables 
+
+  The cleaned corpus was tokenized using the `token` function from the quanteda package, from which n-grams 1-5 were generated using `tokens_ngrams`, converted to a matrix format using `dfm`, and counted using `textstat_frequency`. For efficiency, faster indexing, and a more compact view, the document feature matrices were converted to data.table objects using the data.table package. Finally, a function was created to fetch the first (n-1) words of an n-gram and the last word of an n-gram. These values were stored in newly created "firstWords" and "lastWord" columns in each of the n-gram data tables. With the frequencies of each n-gram, the first words of each n-gram, and the last word of each n-gram, discount coefficients were calculated and included in each n-gram table. Then with the discount coefficients calculated, left over probability tables were derived from their respective n-gram tables.  
+
+#### Step 4: Creating the KBO algorithm function
+
+  The logic of the code used to calculate n-gram probabilities is as follows for the case of trigrams. Note that we are assuming the n-gram is in fact a trigram. 
+  
+1. Separate the words in the trigram into a firstWords (first 2 words of the trigram) element and a lastWord (last word of the trigram) element
+  
+2. Check and see if the firstWords element of the trigram matches any of the firstWords in our trigram training set
+    + If any matches were found, check and see if there is a trigram in our training set that exactly matches     the inputted trigram
+    + If there is an exact match, we can calculate the probability of that trigram right away using the MLE        and discount coefficient associated with the trigram
+    
+3. Else if no trigram matches were found, fetch only the last 2 words of the trigram. Separate the words again into a firstWords element and lastWord element, then check the bigram table for any bigrams with firstWords matching the shortened input's firstWords element.
+    + Retrieve the left over probability value associated with the first 2 words of the trigram from our         previously created left over probability table for trigrams.
+    + If there is an exact match, we  can calculate the conditional back-off probability of the trigram using       the frequencies of the matches not previously found in the trigram table, the left over probability          value, the frequency of the matching bigram, and the bigram's associated discount coefficient. 
+    
+4. Else if no bigram matches were found, the only thing we can rely on are the unigrams. We check the last word of the inputted trigram and try to match it to any of our unigrams in the training set. Again, we only look at unigrams that weren't previously contained in our trigram (and therefore bigram) matches. If a match was found, the conditional back-off probability can be calculated. If we find no matches, that means the last word of the inputted trigram wasn't even observed in our entire training set, and thus we have a case where the conditional back-off probability of the trigram is 0.
+  
+The same logic applies to calculating the probabilities of fivegrams, fourgrams, and bigrams. Similar functions were created to compute these probabilities. 
+    
+#### Step 5: Precomputing probabilities 
+
+  Our predictive function relies on precomputed probabilities stored in data table objects to operate almost instantaneously. If the application were to take user input and run it through a KBO algorithm in real time, it would take far too much memory and time. However, since we already know our sample n-gram frequencies, we can easily prepare these probabilities ahead of time. 
+
+  The function created to calculate the conditional probabilities of every n-gram in the testing data set is computationally demanding as one can imagine. To run through every n-gram (well over 30 million) with our algorithm would take far too long. However, there is a simple solution with very little trade off in terms of model performance, which is to prune extremely sparse n-grams and nonsensical n-grams from the testing set before looping through each n-gram with our back-off algorithm. The full list of n-grams and their corresponding frequencies were collected from the testing set, from which only n-grams with frequencies greater than three were kept. Additionally, n-grams with containing any non-word characters at the beginning of the firstWords column, or containing any non-word characters in the lastWord column were removed. This drastically reduced the dimensions of the testing set and allowed probabilities to be computed for each n-gram in a reasonable amount of time. 
+
+#### Step 6: Finalizing probability tables
+
+  The final step before the probability tables can be sent off for use in our word predict function is to ensure zero probability n-grams are removed. These are n-grams whose last words were never observed in the training set. Culling these useless observations from our n-gram tables also saves memory.    
