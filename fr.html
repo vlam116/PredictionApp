@@ -368,6 +368,7 @@ summary {
 <div id="section-some-final-thoughts" class="section level1">
 <h1><em>Some final thoughts</em></h1>
 <p>While I feel satisfied about the implementation of the model itself, there are definitely some significant improvements that could have been made in the data cleaning process. Cases where sentences were created from the corpus where names of people containing proper titles like “Mr.” or “Mrs.” were problematic. Handling punctuation was also a challenge given the nature of some of the corpora, especially Tweets. As a result many n-grams were generated that were unintended or simply not a part of the original corpus. Overall the data preparation stage could be improved greatly.</p>
+<p>The original sample corpus used to train the model contained 50% of the text from each of the blog, news, and Twitter files. The performance of a back-off model and language models in general is greatly tied to the size of the corpus it was trained on. A bigger corpus means being able to capture a wide variety of words with more certainty in their probabilities of appearing in a random context. Increasing the size of the training corpus, including a wider variety of literature outside of the categories provided, and expanding the test corpus are all potential improvements to consider.</p>
 <div id="section-helpful-resources" class="section level3">
 <h3><em>Helpful Resources</em></h3>
 <ul>
