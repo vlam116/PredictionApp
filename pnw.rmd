@@ -15,12 +15,12 @@ For efficiency, the algorithm counts the number of times the pattern "space foll
 Model performance was evaluated using a benchmarking tool used by other students in the data science capstone.
 Accuracy is among the highest reported and memory usage is among the lowest. 
 
-    Benchmark               Result    
-------------------------- -------- 
-Overall top-3 score       17.80 %
-Overall top-1 precision   13.56 %
-Overall top-3 precision   21.50 %
-Average runtime           88.50 msec
-Number of predictions     28464
-Total memory used         143.14 MB
+|    Benchmark            |  Result    |
+| :---                     | :---   |
+| Overall top-3 score     |  17.80 %    |
+| Overall top-1 precision  | 13.56 %    |
+| Overall top-3 precision |  21.50 %    |
+| Average runtime          | 88.50 msec |
+| Number of predictions   |  28464    |
+| Total memory used       |  143.14 MB |
 
