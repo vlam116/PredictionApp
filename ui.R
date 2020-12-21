@@ -6,6 +6,7 @@ dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Main", tabName = "main", icon = icon("dashboard")),
+      menuItem("Phrase Completer", tabName = "phrase", icon = icon("keyboard")),
       menuItem("About", tabName = "About", icon = icon("book")),
       menuItem("How Predictions are Generated", tabName = "how", icon = icon("calculator")),
       menuItem("Creating predNextWord", tabName = "PNW", icon = icon("laptop-code")),
@@ -40,7 +41,30 @@ dashboardPage(
           )
         )
       ),
-
+      tabItem(tabName = "phrase",
+        fluidRow(
+          box(
+            width = 12,
+            h1("Random Phrase Completer", align = "center"),
+          ),
+          fluidRow(
+            box(
+              width = 12,
+              p(strong("Click the button to draw 5 random phrases from a collection of 8672 possible 
+                       phrases taken from random blogs. Predictions will be generated for each of the 
+                      5 phrases.")),
+              br(),
+              actionBttn(inputId = "go", label = "Run!", color = "success", style = "material-flat"),
+              br(),
+              br(),
+              br(),
+              tableOutput("pp"),
+              p(strong("Sometimes you will get a phrase with typos and words that aren't even in English.
+                       These were purposefully left in to demonstrate that you will always get a prediction."))
+            )
+          )
+        )
+      ),
       tabItem(tabName = "About",
             fluidRow(
               box(

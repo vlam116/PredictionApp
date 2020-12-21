@@ -1,7 +1,7 @@
 library(shiny);library(data.table);library(stringr);library(knitr);library(rmarkdown)
 
 tks = readRDS("final_tokens.rds");bg = readRDS("bg_final.rds");tg = readRDS("tg_final.rds")
-fg = readRDS("fourgram_final.rds");fiveg = readRDS("fivegram_final.rds")
+fg = readRDS("fourgram_final.rds");fiveg = readRDS("fivegram_final.rds");phrases = readRDS("phrases.rds")
 
 getLastWords = function(input, n = 1){
     # Removing extra spaces and uppercases inputted by user
@@ -124,6 +124,21 @@ shinyServer(function(input, output) {
        paste(input$userInput,
              "<font color=\"#E81010\"><b>", predTable()$Prediction[1], "</b>")
 
+    })
+    
+    v = reactiveValues(numbers = sample(8672, 5))
+    
+    observeEvent(input$go, {
+        v$numbers = sample(8672, 5)
+    })
+    
+    output$pp = renderTable({
+        RandomPhrases = phrases[v$numbers]
+        TopPrediction = c()
+        for(i in 1:5){
+        TopPrediction[i] = predNextWord(RandomPhrases[i])$Prediction[1]
+        }
+        as.data.table(cbind(RandomPhrases, TopPrediction))
     })
 
     output$aboutrmd = renderUI({
