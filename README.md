@@ -3,6 +3,7 @@ Link to app:
 https://vtlam116.shinyapps.io/NextWordPrediction/
 
 Changelog: 
+
 Version 1.0
 -Created main page containing the Next Word Prediction feature
 -Created About page
