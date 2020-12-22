@@ -32,7 +32,8 @@ dashboardPage(
                       then a next word prediction along with a table of next word candidates will appear below.
                       The associated probabilities are listed along side the predicted words, which were
                       calculated using Katz's back-off model with Good Turing smoothing. Up to five potential
-                      words will be generated. You are free to type as many words as you want."),
+                      words will be generated. You are free to type as many words as you want.",
+                      value = "Hey, check this"),
             br(),
             htmlOutput("Prediction"),
             br(),
