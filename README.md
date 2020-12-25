@@ -30,4 +30,10 @@ Version 1.2
 
 -Updated further reading page
 
+Version 1.3
+
+-Revamped UI for About page and swapped images
+
+-Fixed some typos
+
 refresh if the equations don't render properly (thanks r)
