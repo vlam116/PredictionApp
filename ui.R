@@ -74,27 +74,41 @@ dashboardPage(
               )
             ),
             fluidRow(
+              column(width = 2),
               box(
                 title = "Google's powerful autocomplete search engine let's you find relevant 
                 information quickly.",
+                status = "primary",
+                solidHeader = TRUE,
                 width = 4,
                 height = 300,
-                img(src = "g.jpg", height = 200, width = 400)
-              ),
-              box(
-                title = "YouTube's predictive search bar allows you to find past content and discover
-                new content, thereby providing data used to suggest more content you might like.",
-                width = 4,
-                height = 300,
-                img(src = "y.png", height = 200, width = 400)
+                align = "center",
+                img(src = "google.gif", height = 200, width = 400)
               ),
               box(
                 title = "Messenger apps provide word, phrase, and sentence completion with a good degree
                 of accuracy and speed.",
+                status = "info",
+                solidHeader = TRUE,
                 width = 4,
                 height = 300,
-                img(src = "m.png", height = 200, width = 400)
-              )
+                align = "center",
+                img(src = "m.gif", height = 200, width = 300)
+              ),
+              column(width = 2),
+            ),
+            fluidRow(
+              column(width = 3),
+              box(
+                title = "YouTube's predictive search bar allows you to find past content and discover
+                new content, thereby providing data used to suggest more content you might like.",
+                status = "danger",
+                solidHeader = TRUE,
+                width = 6,
+                height = 300,
+                align = "center",
+                img(src = "youtube.gif", height = 200, width = 800)
+              ),
             )
           ),
       tabItem(tabName = "how",
