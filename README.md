@@ -30,7 +30,16 @@
 
 >Updated further reading page
 
+#### Version 1.3
+
+>Revamped UI for About page and swapped images
+
+>Fixed typos
+
 Known issues / suggested improvements: 
 -  Mathematical equations sometimes failing to render properly
 -  Word predict feature should generate predictions after the user presses space instead of whenever the input is changed
 - Code for generating predictions could be optimized for faster runtime
+
+
+
